@@ -1,6 +1,7 @@
 import { SQSEvent, SQSRecord } from 'aws-lambda';
 import { TrackingRequest } from './types.js';
 import { trackByCourier } from './carrier/index.js';
+import './carrier/register.js';
 import { sendResult } from './sqs/result-sender.js';
 
 async function processRecord(record: SQSRecord): Promise<void> {
@@ -42,5 +43,10 @@ async function processRecord(record: SQSRecord): Promise<void> {
 export const handler = async (event: SQSEvent): Promise<void> => {
   console.log(`[Handler] Processing ${event.Records.length} record(s)`);
 
-  await Promise.allSettled(event.Records.map((record) => processRecord(record)));
+  const settled = await Promise.allSettled(event.Records.map((record) => processRecord(record)));
+  const failedCount = settled.filter((result) => result.status === 'rejected').length;
+
+  if (failedCount > 0) {
+    throw new Error(`[Handler] Failed to process ${failedCount} record(s)`);
+  }
 };

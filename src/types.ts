@@ -1,4 +1,4 @@
-export type CourierCompany = 'LOGEN' | 'HANJIN' | 'CJ' | 'LOTTE';
+export type CourierCompany = 'LOGEN' | 'HANJIN' | 'CJ' | 'LOTTE' | 'EPOST';
 
 export type CourierOrderStatus = 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED';
 
