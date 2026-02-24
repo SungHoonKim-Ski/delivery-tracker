@@ -1,0 +1,24 @@
+{
+  "name": "onuljang-tracker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.996.0",
+    "cheerio": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.160",
+    "@types/node": "^25.3.0",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.9.3"
+  }
+}
