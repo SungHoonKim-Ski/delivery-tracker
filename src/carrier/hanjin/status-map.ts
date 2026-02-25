@@ -20,15 +20,17 @@ export function mapHanjinStatus(text: string): CourierOrderStatus | null {
     return 'SHIPPED';
   }
 
-  if (text.includes('배달완료') || text.includes('배송완료')) {
+  if (text.includes('배달완료') || text.includes('배송완료') || text.includes('인수확인')) {
     return 'DELIVERED';
   }
 
   if (
     text.includes('이동중') ||
     text.includes('간선') ||
+    text.includes('배송출고') ||
     text.includes('배송출발') ||
     text.includes('배달출발') ||
+    text.includes('배달중') ||
     text.includes('도착') ||
     text.includes('상차') ||
     text.includes('하차')

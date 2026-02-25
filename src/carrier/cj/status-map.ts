@@ -20,7 +20,7 @@ export function mapCjStatus(text: string): CourierOrderStatus | null {
     return 'SHIPPED';
   }
 
-  if (text.includes('배달완료') || text.includes('배송완료')) {
+  if (text.includes('배달완료') || text.includes('배송완료') || text.includes('인수확인')) {
     return 'DELIVERED';
   }
 
@@ -30,8 +30,12 @@ export function mapCjStatus(text: string): CourierOrderStatus | null {
     text.includes('간선하차') ||
     text.includes('간선출발') ||
     text.includes('간선도착') ||
+    text.includes('배송출고') ||
     text.includes('배송출발') ||
-    text.includes('배달중')
+    text.includes('배달출발') ||
+    text.includes('배달중') ||
+    text.includes('이동중') ||
+    text.includes('도착')
   ) {
     return 'IN_TRANSIT';
   }

@@ -27,6 +27,7 @@ export function mapLogenStatus(text: string): CourierOrderStatus | null {
   if (
     text.includes('터미널입고') ||
     text.includes('터미널출고') ||
+    text.includes('배송출고') ||
     text.includes('이동중') ||
     text.includes('간선상차') ||
     text.includes('간선하차') ||
