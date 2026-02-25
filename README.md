@@ -74,6 +74,17 @@ npm run build
 - `RESULT_QUEUE_URL` (필수): 조회 결과를 발행할 SQS Queue URL
 - `TRACKER_API_KEY` (선택): tracker.delivery 인증 키 (`client_id:client_secret` 형식)
 
+운영(Lambda)에서는 `Configuration > Environment variables`에서 값을 설정합니다.
+
+```text
+RESULT_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/123456789012/onuljang-result
+TRACKER_API_KEY=client_key:client_secret
+```
+
+참고:
+- 현재 코드는 `config.local.yml`을 읽지 않습니다.
+- 비밀 값은 git에 커밋하지 마세요.
+
 ## 프로젝트 구조
 
 ```text
@@ -96,7 +107,7 @@ src/
 ## 새 택배사 추가 방법
 
 1. `src/carrier/<carrier>/status-map.ts` 작성
-2. `src/carrier/<carrier>/api-tracker.ts`(API 방식) 또는 `crawler.ts`(HTML 파싱 방식) 구현
+2. `src/carrier/<carrier>/api-tracker.ts` 구현
 3. API 응답을 `TrackingResult`로 정규화
 4. `src/carrier/register.ts`에 등록
 5. `CourierCompany` 타입(`src/types.ts`)에 코드 추가
@@ -105,5 +116,5 @@ src/
 
 - 각 택배사 API 스펙/인증 방식 변경 시 연동 로직이 깨질 수 있습니다.
 - 현재 등록된 택배사는 `tracker.delivery` API(`https://apis.tracker.delivery/carriers/{carrier_id}/tracks/{track_id}`)를 사용합니다.
-- `LOGEN`/`HANJIN`은 대안으로 `crawler.ts` 구현도 함께 유지합니다.
+- 모든 택배사는 `tracker.delivery` API 경로로 조회하도록 구성되어 있습니다.
 - 운영 전 실제 운송장으로 상태 매핑 정확도를 반드시 검증하세요.
