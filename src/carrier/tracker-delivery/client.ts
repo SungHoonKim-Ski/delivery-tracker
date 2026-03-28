@@ -40,10 +40,12 @@ export function buildTrackerDeliveryRequest(
   };
 }
 
-function stripOffset(time: string | undefined): string | null {
+function toLocalDateTime(time: string | undefined): string | null {
   if (!time) return null;
   const trimmed = time.trim();
-  // "2026-03-29T10:00:00+09:00" → "2026-03-29T10:00:00"
+  // "2026-03-29T10:00:00.123+09:00" → "2026-03-29T10:00:00"
+  // "2026-03-29T10:00:00Z"          → "2026-03-29T10:00:00"
+  // "2026-03-29T10:00:00"           → "2026-03-29T10:00:00"
   const match = trimmed.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
   return match ? match[1] : trimmed;
 }
@@ -66,6 +68,6 @@ export async function parseTrackerDeliveryEvents(response: Response): Promise<Ap
     statusCode: p.status?.id || null,
     statusText: p.status?.text || null,
     location: p.location?.name || null,
-    timestamp: stripOffset(p.time),
+    timestamp: toLocalDateTime(p.time),
   }));
 }
