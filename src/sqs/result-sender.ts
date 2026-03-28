@@ -16,7 +16,7 @@ export async function sendResult(result: TrackingResult): Promise<void> {
         MessageBody: JSON.stringify(result),
       })
     );
-    console.log(`[SQS] Sent result for ${result.displayCode}: status=${result.status}`);
+    console.log(`[SQS] Sent result for ${result.displayCode}: ${result.events.length} event(s)`);
   } catch (err) {
     console.error(`[SQS] Failed to send result for ${result.displayCode}:`, err);
     throw err;

@@ -8,11 +8,17 @@ export interface TrackingRequest {
   courierCompany: CourierCompany;
 }
 
+export interface TrackingEvent {
+  eventAt: string | null;
+  location: string | null;
+  rawStatusCode: string | null;
+  rawStatusText: string | null;
+  mappedStatus: CourierOrderStatus | null;
+}
+
 export interface TrackingResult {
   displayCode: string;
-  status: CourierOrderStatus;
-  location?: string;
-  timestamp?: string;
+  events: TrackingEvent[];
 }
 
 export interface CarrierTracker {

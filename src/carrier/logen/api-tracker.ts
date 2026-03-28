@@ -1,5 +1,5 @@
 import { createApiTracker } from '../base-api-tracker.js';
-import { buildTrackerDeliveryRequest, parseTrackerDeliveryLatestEvent } from '../tracker-delivery/client.js';
+import { buildTrackerDeliveryRequest, parseTrackerDeliveryEvents } from '../tracker-delivery/client.js';
 import { mapLogenStatus } from './status-map.js';
 
 const logenApiTracker = createApiTracker({
@@ -7,8 +7,8 @@ const logenApiTracker = createApiTracker({
   buildRequest(trackingNumber: string) {
     return buildTrackerDeliveryRequest('kr.logen', trackingNumber);
   },
-  async parseLatestEvent(response: Response) {
-    return parseTrackerDeliveryLatestEvent(response);
+  async parseEvents(response: Response) {
+    return parseTrackerDeliveryEvents(response);
   },
   mapStatus: mapLogenStatus,
 });

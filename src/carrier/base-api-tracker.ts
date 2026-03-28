@@ -1,29 +1,31 @@
-import { CarrierTracker, CourierOrderStatus, TrackingResult } from '../types.js';
+import { CarrierTracker, CourierOrderStatus, TrackingEvent, TrackingResult } from '../types.js';
 
 export interface ApiTrackingEvent {
-  statusText: string;
-  location?: string;
-  date?: string;
-  time?: string;
-  timestamp?: string;
+  statusCode: string | null;
+  statusText: string | null;
+  location: string | null;
+  timestamp: string | null;
 }
 
 export interface ApiTrackerConfig {
   carrierCode: string;
   buildRequest(trackingNumber: string): { url: string; init: RequestInit };
-  parseLatestEvent(response: Response, trackingNumber: string): Promise<ApiTrackingEvent | null>;
+  parseEvents(response: Response, trackingNumber: string): Promise<ApiTrackingEvent[]>;
   mapStatus(text: string): CourierOrderStatus | null;
 }
 
-function toTimestamp(event: ApiTrackingEvent): string | undefined {
-  if (event.timestamp?.trim()) {
-    return event.timestamp.trim();
-  }
-
-  const date = event.date?.trim() || '';
-  const time = event.time?.trim() || '';
-  const combined = [date, time].filter(Boolean).join(' ').trim();
-  return combined || undefined;
+function toTrackingEvent(
+  event: ApiTrackingEvent,
+  mapStatus: (text: string) => CourierOrderStatus | null
+): TrackingEvent {
+  const statusKey = (event.statusCode || event.statusText || '').trim();
+  return {
+    eventAt: event.timestamp,
+    location: event.location,
+    rawStatusCode: event.statusCode,
+    rawStatusText: event.statusText,
+    mappedStatus: statusKey ? mapStatus(statusKey) : null,
+  };
 }
 
 export function createApiTracker(config: ApiTrackerConfig): CarrierTracker {
@@ -44,26 +46,23 @@ export function createApiTracker(config: ApiTrackerConfig): CarrierTracker {
         return null;
       }
 
-      const event = await config.parseLatestEvent(response, trackingNumber);
-      if (!event) {
-        console.warn(`[${config.carrierCode}] No tracking event found for ${trackingNumber}`);
+      const rawEvents = await config.parseEvents(response, trackingNumber);
+      if (rawEvents.length === 0) {
+        console.warn(`[${config.carrierCode}] No tracking events found for ${trackingNumber}`);
         return null;
       }
 
-      const status = config.mapStatus(event.statusText.trim());
-      if (!status) {
-        console.warn(
-          `[${config.carrierCode}] Unknown status text: "${event.statusText}" for ${trackingNumber}`
-        );
+      const events: TrackingEvent[] = rawEvents.map((e) => toTrackingEvent(e, config.mapStatus));
+
+      const hasAnyUsable = events.some(
+        (e) => e.eventAt || e.location || e.rawStatusCode || e.rawStatusText
+      );
+      if (!hasAnyUsable) {
+        console.warn(`[${config.carrierCode}] All events unusable for ${trackingNumber}`);
         return null;
       }
 
-      return {
-        displayCode,
-        status,
-        location: event.location?.trim() || undefined,
-        timestamp: toTimestamp(event),
-      };
+      return { displayCode, events };
     },
   };
 }

@@ -40,22 +40,18 @@ export function buildTrackerDeliveryRequest(
   };
 }
 
-export async function parseTrackerDeliveryLatestEvent(response: Response): Promise<ApiTrackingEvent | null> {
+export async function parseTrackerDeliveryEvents(response: Response): Promise<ApiTrackingEvent[]> {
   const data = (await response.json()) as TrackerDeliveryResponse;
 
   const progresses = Array.isArray(data.progresses) ? data.progresses : [];
-  const lastProgress = progresses.length > 0 ? progresses[progresses.length - 1] : undefined;
-
-  const statusCode = lastProgress?.status?.id || data.state?.id || '';
-  const statusText = lastProgress?.status?.text || data.state?.text || statusCode;
-
-  if (!statusCode && !statusText) {
-    return null;
+  if (progresses.length === 0) {
+    return [];
   }
 
-  return {
-    statusText: statusCode || statusText,
-    location: lastProgress?.location?.name || '',
-    timestamp: lastProgress?.time || undefined,
-  };
+  return progresses.map((p) => ({
+    statusCode: p.status?.id || null,
+    statusText: p.status?.text || null,
+    location: p.location?.name || null,
+    timestamp: p.time || null,
+  }));
 }
