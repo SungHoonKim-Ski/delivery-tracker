@@ -3,6 +3,7 @@ export type CourierCompany = 'LOGEN' | 'HANJIN' | 'CJ' | 'LOTTE' | 'EPOST';
 export type CourierOrderStatus = 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED';
 
 export interface TrackingRequest {
+  requestId?: string;
   displayCode: string;
   trackingNumber: string;
   courierCompany: CourierCompany;
@@ -17,6 +18,7 @@ export interface TrackingEvent {
 }
 
 export interface TrackingResult {
+  requestId?: string;
   displayCode: string;
   events: TrackingEvent[];
 }
