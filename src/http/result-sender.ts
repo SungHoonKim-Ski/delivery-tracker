@@ -12,9 +12,15 @@ export async function sendResultHttp(result: TrackingResult): Promise<void> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      requestId: result.requestId,
-      displayCode: result.displayCode,
-      events: result.events,
+      request_id: result.requestId,
+      display_code: result.displayCode,
+      events: result.events.map(e => ({
+        event_at: e.eventAt,
+        location: e.location,
+        raw_status_code: e.rawStatusCode,
+        raw_status_text: e.rawStatusText,
+        mapped_status: e.mappedStatus,
+      })),
     }),
     signal: AbortSignal.timeout(10_000),
   });
