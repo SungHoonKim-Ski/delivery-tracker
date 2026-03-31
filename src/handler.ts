@@ -35,13 +35,24 @@ async function processRequest(request: TrackingRequest): Promise<void> {
   await sendResultHttp(result);
 }
 
-export const handler = async (event: TrackingRequest[]): Promise<void> => {
-  console.log(`[Handler] Processing ${event.length} request(s)`);
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const settled = await Promise.allSettled(event.map(processRequest));
-  const failedCount = settled.filter((result) => result.status === 'rejected').length;
+export const handler = async (event: TrackingRequest[]): Promise<void> => {
+  console.log(`[Handler] Processing ${event.length} request(s) sequentially`);
+
+  let failedCount = 0;
+  for (let i = 0; i < event.length; i++) {
+    try {
+      await processRequest(event[i]);
+    } catch {
+      failedCount++;
+    }
+    if (i < event.length - 1) {
+      await delay(200);
+    }
+  }
 
   if (failedCount > 0) {
-    throw new Error(`[Handler] Failed to process ${failedCount} request(s)`);
+    console.error(`[Handler] ${failedCount} request(s) failed`);
   }
 };
