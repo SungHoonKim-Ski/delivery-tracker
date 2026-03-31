@@ -42,7 +42,8 @@ export function createApiTracker(config: ApiTrackerConfig): CarrierTracker {
       }
 
       if (!response.ok) {
-        console.error(`[${config.carrierCode}] HTTP ${response.status} for ${trackingNumber}`);
+        const body = await response.text().catch(() => '');
+        console.error(`[${config.carrierCode}] HTTP ${response.status} for ${trackingNumber}: ${body.slice(0, 200)}`);
         return null;
       }
 

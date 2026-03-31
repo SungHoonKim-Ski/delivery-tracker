@@ -24,11 +24,14 @@ export function buildTrackerDeliveryRequest(
 ): { url: string; init: RequestInit } {
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    'User-Agent': 'onuljang-tracker/1.0',
   };
 
   const apiKey = process.env.TRACKER_API_KEY;
   if (apiKey) {
     headers.Authorization = `TRACKQL-API-KEY ${apiKey}`;
+  } else {
+    console.warn('[TrackerDelivery] TRACKER_API_KEY is not set');
   }
 
   return {
