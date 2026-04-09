@@ -4,7 +4,7 @@ import './carrier/register.js';
 import { sendResultHttp } from './http/result-sender.js';
 
 async function processRequest(request: TrackingRequest): Promise<void> {
-  const { requestId, displayCode, trackingNumber, courierCompany } = request;
+  const { requestId, shipmentId, displayCode, trackingNumber, courierCompany } = request;
 
   if (!displayCode || !trackingNumber || !courierCompany) {
     console.error('[Handler] Missing required fields in request:', request);
@@ -28,6 +28,7 @@ async function processRequest(request: TrackingRequest): Promise<void> {
 
   const result: TrackingResult = {
     requestId,
+    shipmentId,
     displayCode: tracked.displayCode,
     events: tracked.events,
   };
@@ -48,7 +49,7 @@ export const handler = async (event: TrackingRequest[]): Promise<void> => {
       failedCount++;
     }
     if (i < event.length - 1) {
-      await delay(200);
+      await delay(300);
     }
   }
 

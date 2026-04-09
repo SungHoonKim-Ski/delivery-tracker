@@ -4,6 +4,7 @@ export type CourierOrderStatus = 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED';
 
 export interface TrackingRequest {
   requestId?: string;
+  shipmentId?: number;
   displayCode: string;
   trackingNumber: string;
   courierCompany: CourierCompany;
@@ -19,6 +20,7 @@ export interface TrackingEvent {
 
 export interface TrackingResult {
   requestId?: string;
+  shipmentId?: number;
   displayCode: string;
   events: TrackingEvent[];
 }

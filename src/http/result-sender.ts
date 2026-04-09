@@ -13,6 +13,7 @@ export async function sendResultHttp(result: TrackingResult): Promise<void> {
     },
     body: JSON.stringify({
       request_id: result.requestId,
+      shipment_id: result.shipmentId,
       display_code: result.displayCode,
       events: result.events.map(e => ({
         event_at: e.eventAt,
