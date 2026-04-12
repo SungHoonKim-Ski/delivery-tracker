@@ -11,7 +11,10 @@ export function mapHanjinStatus(text: string): CourierOrderStatus | null {
     normalized === 'in_transit' ||
     normalized === 'out_for_delivery' ||
     normalized === 'at_destination_hub' ||
-    normalized === 'at_pickup_hub'
+    normalized === 'at_pickup_hub' ||
+    normalized === 'attempt_fail' ||
+    normalized === 'available_for_pickup' ||
+    normalized === 'exception'
   ) {
     return 'IN_TRANSIT';
   }
