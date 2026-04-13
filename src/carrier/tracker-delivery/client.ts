@@ -96,9 +96,11 @@ function toLocalDateTime(time: string | null | undefined): string | null {
 }
 
 function isUsableEvent(node: TrackEventNode): boolean {
-  // v2 first event is often a placeholder with time=null, location="상품위치"
-  // UNKNOWN status (e.g. 인수자등록) provides no useful tracking info
-  return node.time != null && node.status.code !== 'UNKNOWN';
+  // v2 first event is often a placeholder with time=null
+  if (node.time == null) return false;
+  // UNKNOWN with description may contain delivery info (e.g. 롯데 "고객" = 배달완료)
+  if (node.status.code === 'UNKNOWN' && !node.description && !node.status.name) return false;
+  return true;
 }
 
 export async function parseTrackerDeliveryEvents(response: Response): Promise<ApiTrackingEvent[]> {
@@ -120,7 +122,7 @@ export async function parseTrackerDeliveryEvents(response: Response): Promise<Ap
       .filter(isUsableEvent)
       .map((node) => ({
         statusCode: node.status.code || null,
-        statusText: node.status.name || null,
+        statusText: node.status.name || node.description || null,
         location: node.location?.name || null,
         timestamp: toLocalDateTime(node.time),
       }));

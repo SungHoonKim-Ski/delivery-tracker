@@ -23,7 +23,7 @@ export function mapLotteStatus(text: string): CourierOrderStatus | null {
     return 'SHIPPED';
   }
 
-  if (text.includes('배달완료') || text.includes('배송완료') || text.includes('인수확인')) {
+  if (text.includes('배달완료') || text.includes('배송완료') || text.includes('인수확인') || text === '고객') {
     return 'DELIVERED';
   }
 

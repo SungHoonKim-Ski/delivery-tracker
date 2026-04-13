@@ -18,7 +18,10 @@ function toTrackingEvent(
   event: ApiTrackingEvent,
   mapStatus: (text: string) => CourierOrderStatus | null
 ): TrackingEvent {
-  const statusKey = (event.statusCode || event.statusText || '').trim();
+  const statusCode = (event.statusCode || '').trim();
+  const statusText = (event.statusText || '').trim();
+  // UNKNOWN 코드인 경우 statusText로 매핑 시도 (e.g. 롯데 "고객" → DELIVERED)
+  const statusKey = statusCode === 'UNKNOWN' && statusText ? statusText : (statusCode || statusText);
   return {
     eventAt: event.timestamp,
     location: event.location,
