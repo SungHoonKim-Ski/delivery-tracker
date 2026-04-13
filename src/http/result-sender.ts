@@ -15,6 +15,7 @@ export async function sendResultHttp(result: TrackingResult): Promise<void> {
       request_id: result.requestId,
       shipment_id: result.shipmentId,
       display_code: result.displayCode,
+      shipment_status: result.shipmentStatus,
       events: result.events.map(e => ({
         event_at: e.eventAt,
         location: e.location,

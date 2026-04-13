@@ -4,7 +4,7 @@ import './carrier/register.js';
 import { sendResultHttp } from './http/result-sender.js';
 
 async function processRequest(request: TrackingRequest): Promise<void> {
-  const { requestId, shipmentId, displayCode, trackingNumber, courierCompany } = request;
+  const { requestId, shipmentId, displayCode, trackingNumber, courierCompany, shipmentStatus } = request;
 
   if (!displayCode || !trackingNumber || !courierCompany) {
     console.error('[Handler] Missing required fields in request:', request);
@@ -18,11 +18,28 @@ async function processRequest(request: TrackingRequest): Promise<void> {
     tracked = await trackByCourier(courierCompany, trackingNumber, displayCode);
   } catch (err) {
     console.error(`[Handler] Carrier tracking threw unexpectedly for ${trackingNumber}:`, err);
+    const errorResult: TrackingResult = {
+      requestId,
+      shipmentId,
+      displayCode,
+      shipmentStatus,
+      events: [],
+    };
+    await sendResultHttp(errorResult).catch(e =>
+      console.error(`[Handler] Failed to send error callback for ${trackingNumber}:`, e));
     return;
   }
 
   if (!tracked) {
     console.warn(`[Handler] No result for ${courierCompany} / ${trackingNumber}`);
+    const notFoundResult: TrackingResult = {
+      requestId,
+      shipmentId,
+      displayCode,
+      shipmentStatus,
+      events: [],
+    };
+    await sendResultHttp(notFoundResult);
     return;
   }
 
@@ -30,6 +47,7 @@ async function processRequest(request: TrackingRequest): Promise<void> {
     requestId,
     shipmentId,
     displayCode: tracked.displayCode,
+    shipmentStatus,
     events: tracked.events,
   };
 

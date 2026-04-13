@@ -8,6 +8,7 @@ export interface TrackingRequest {
   displayCode: string;
   trackingNumber: string;
   courierCompany: CourierCompany;
+  shipmentStatus?: string;
 }
 
 export interface TrackingEvent {
@@ -22,6 +23,7 @@ export interface TrackingResult {
   requestId?: string;
   shipmentId?: number;
   displayCode: string;
+  shipmentStatus?: string;
   events: TrackingEvent[];
 }
 
