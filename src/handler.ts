@@ -63,7 +63,8 @@ export const handler = async (event: TrackingRequest[]): Promise<void> => {
   for (let i = 0; i < event.length; i++) {
     try {
       await processRequest(event[i]);
-    } catch {
+    } catch (err) {
+      console.error(`[Handler] Request failed for ${event[i]?.trackingNumber}:`, err);
       failedCount++;
     }
     if (i < event.length - 1) {
