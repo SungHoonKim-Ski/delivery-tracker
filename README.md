@@ -72,7 +72,7 @@ npm run build
 ## 환경 변수
 
 - `RESULT_QUEUE_URL` (필수): 조회 결과를 발행할 SQS Queue URL
-- `TRACKER_API_KEY` (선택): tracker.delivery 인증 키 (`client_id:client_secret` 형식)
+- `TRACKER_API_KEY` (선택): tracker.delivery 인증 키 (`client_id:client_secret` 형식). 만료 주기가 짧으므로(약 21일) 주기적 갱신이 필요하다 — 갱신/검증 절차는 [docs/API_KEY_ROTATION.md](docs/API_KEY_ROTATION.md) 참고
 
 운영(Lambda)에서는 `Configuration > Environment variables`에서 값을 설정합니다.
 
