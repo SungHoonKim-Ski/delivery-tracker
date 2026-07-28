@@ -1,0 +1,77 @@
+name: API Key Expiry → Slack
+
+# 배송조회(tracker.delivery) API 키 만료 D-7 백업 알림.
+# 로컬 SessionStart 훅(.claude/hooks/api-key-expiry.mjs)이 1차 환기 채널이나,
+# 노트북이 꺼져 있으면 발화하지 않는다. 이 워크플로는 GitHub 인프라에서 매일 돌며
+# 발급일(api-key-issued-at) + 21일 만료 커트라인이 D-7 이내면 Slack으로 알린다.
+# SoT는 로컬 훅과 동일: api-key-issued-at (발급일 1줄, YYYY-MM-DD).
+
+on:
+  schedule:
+    # 매일 00:13 UTC = 09:13 KST. (:00/:30 회피)
+    - cron: "13 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-expiry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 만료일 계산 + D-7 이내면 Slack 알림
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          CYCLE_DAYS=21          # 만료 주기 (docs/API_KEY_ROTATION.md § 만료 주기)
+          WARN_WITHIN_DAYS=7     # 이 일수 이내부터 알림 (로컬 훅과 동일)
+
+          if [ ! -f api-key-issued-at ]; then
+            echo "api-key-issued-at 파일 없음 — skip"
+            exit 0
+          fi
+
+          ISSUED=$(tr -d '[:space:]' < api-key-issued-at)
+          if ! date -u -d "$ISSUED" +%s >/dev/null 2>&1; then
+            echo "발급일 파싱 실패: '$ISSUED' — skip"
+            exit 0
+          fi
+
+          ISSUED_EPOCH=$(date -u -d "$ISSUED" +%s)
+          EXPIRY_EPOCH=$(( ISSUED_EPOCH + CYCLE_DAYS * 86400 ))
+          TODAY_EPOCH=$(date -u -d "$(date -u +%Y-%m-%d)" +%s)
+          EXPIRY_DATE=$(date -u -d "@$EXPIRY_EPOCH" +%Y-%m-%d)
+          DAYS_LEFT=$(( (EXPIRY_EPOCH - TODAY_EPOCH) / 86400 ))
+
+          echo "발급 $ISSUED · 만료 예정 $EXPIRY_DATE · 남은 일수 $DAYS_LEFT"
+
+          if [ "$DAYS_LEFT" -gt "$WARN_WITHIN_DAYS" ]; then
+            echo "커트라인($WARN_WITHIN_DAYS일) 밖 — 알림 안 함"
+            exit 0
+          fi
+
+          if [ "$DAYS_LEFT" -lt 0 ]; then
+            WHEN="만료 $(( -DAYS_LEFT ))일 경과"
+          elif [ "$DAYS_LEFT" -eq 0 ]; then
+            WHEN="오늘 만료"
+          else
+            WHEN="만료 D-${DAYS_LEFT}"
+          fi
+
+          TEXT=$(printf '%s\n%s\n%s' \
+            "🔑 [배송조회 API 키] ${WHEN} (발급 ${ISSUED} · 만료 예정 ${EXPIRY_DATE})" \
+            "갱신: delivery-tracker 레포에서 \`./scripts/rotate-api-key.sh \"CLIENT_ID:CLIENT_SECRET\"\`" \
+            "런북: docs/API_KEY_ROTATION.md")
+
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
+            echo "SLACK_WEBHOOK_URL secret 미설정 — 알림 전송 불가"
+            echo "$TEXT"
+            exit 1
+          fi
+
+          PAYLOAD=$(jq -n --arg text "$TEXT" '{text: $text}')
+          curl -sSf -X POST -H 'Content-Type: application/json' \
+            --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+          echo "Slack 알림 전송 완료"
