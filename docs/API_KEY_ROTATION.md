@@ -3,8 +3,24 @@
 `TRACKER_API_KEY`(tracker.delivery 발급)는 만료 주기가 짧다. 만료되면 모든 배송조회가
 carrier dispatch 직후 인증 에러로 실패하므로, 만료 전 갱신이 필요하다.
 
-> 실제 키 값은 이 문서·repo에 절대 기록하지 않는다. `config.local.yml`은 gitignore 대상이며,
-> 운영 값은 Lambda 환경변수에만 존재한다.
+> 실제 키 값은 이 문서·repo에 절대 기록하지 않는다. 운영 값은 Lambda 환경변수에만 존재한다.
+
+## 빠른 경로 — `scripts/rotate-api-key.sh`
+
+키만 재발급하면(아래 § 갱신 절차 1) 나머지는 스크립트 한 줄이 처리한다:
+
+```bash
+./scripts/rotate-api-key.sh "CLIENT_ID:CLIENT_SECRET"
+```
+
+스크립트가 dev env 갱신 → dev invoke 검증 → (통과 시에만) prod env 갱신 → 발급일 기록까지 수행한다.
+- **env 유실 방지**: 현재 Lambda 환경변수 전체를 읽어 `TRACKER_API_KEY`만 교체한다. 아래 § 2의 수동 절차처럼
+  `RESULT_API_URL`을 손으로 다시 넣을 필요가 없고, `RESULT_QUEUE_URL` 등 다른 값도 보존된다.
+- **검증 게이트**: dev 검증이 통과해야 prod에 반영한다. 검증이 불명확(UNKNOWN)하면 로그를 출력하고 멈추며,
+  직접 확인 후 확신하면 `--force-prod`로 재실행한다. dev만 확인하려면 `--dev-only`.
+- **발급일 자동 기록**: prod 반영 후 `api-key-issued-at`에 오늘 날짜를 쓴다. 이 파일이 만료 환기의 SoT다(§ 4).
+
+수동으로 하려면 아래 절차를 그대로 따라도 된다(스크립트는 이 절차의 자동화다).
 
 ## 만료 주기
 
@@ -54,17 +70,22 @@ aws lambda get-function-configuration --function-name dev-onuljang-courier-track
   --region ap-northeast-2 --query 'Environment.Variables' --output json
 ```
 
-### 3. 로컬 설정 반영
+### 3. 로컬 설정 반영 (불요)
 
-`config.local.yml`의 `TRACKER_API_KEY`를 새 값으로 갱신 (gitignore 대상, 커밋되지 않음).
+과거에는 `config.local.yml`을 갱신했으나, **현재 코드는 이 파일을 읽지 않는다**(README 참고).
+운영 진실은 Lambda 환경변수뿐이므로 이 단계는 없다.
 
-### 4. 발급일 기록 (선택)
+### 4. 발급일 기록
 
-만료 알림을 운영하는 경우 발급일을 로컬에 기록한다 (경로는 운영자 머신별로 다를 수 있음):
+발급일은 repo 내 `api-key-issued-at`(레포 루트, 1줄 `YYYY-MM-DD`)에 기록한다. 날짜 자체는 비밀이 아니므로 커밋한다.
 
 ```bash
-echo "$(date +%Y-%m-%d)" > <발급일-기록-파일-경로>
+echo "$(date +%Y-%m-%d)" > api-key-issued-at
 ```
+
+이 파일이 워크스페이스 SessionStart 훅의 만료 환기 SoT다 — 발급일 + 21일이 만료 커트라인(D-7) 이내면
+세션 시작 시 "🔑 배송조회 API 키 만료 D-N" 한 줄이 뜬다. `rotate-api-key.sh`는 이 파일을 자동으로 갱신하므로,
+스크립트 사용 시 마지막에 안내되는 커밋·푸시만 수행하면 된다.
 
 ## 검증
 
