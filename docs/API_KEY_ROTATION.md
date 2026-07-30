@@ -87,6 +87,10 @@ echo "$(date +%Y-%m-%d)" > api-key-issued-at
 세션 시작 시 "🔑 배송조회 API 키 만료 D-N" 한 줄이 뜬다. `rotate-api-key.sh`는 이 파일을 자동으로 갱신하므로,
 스크립트 사용 시 마지막에 안내되는 커밋·푸시만 수행하면 된다.
 
+환기 채널은 이중이다: 위 로컬 훅(노트북 세션 시작 시)에 더해, `.github/workflows/api-key-expiry-slack.yml`이
+매일 09:13 KST에 같은 SoT를 읽어 D-7 이내면 Slack으로 알린다(laptop-independent 백업). 두 채널은 발급일 SoT와
+만료 상수(21일·D-7)를 공유하므로 이 파일만 갱신하면 양쪽이 함께 정확해진다.
+
 ## 검증
 
 dev Lambda를 직접 invoke해 새 키가 외부 호출까지 통과하는지 확인한다.
