@@ -13,11 +13,21 @@ carrier dispatch 직후 인증 에러로 실패하므로, 만료 전 갱신이 �
 ./scripts/rotate-api-key.sh "CLIENT_ID:CLIENT_SECRET"
 ```
 
-스크립트가 dev env 갱신 → dev invoke 검증 → (통과 시에만) prod env 갱신 → 발급일 기록까지 수행한다.
+스크립트가 키 판정 → dev env 갱신 → dev invoke 배선 검증 → (통과 시에만) prod env 갱신 → 발급일 기록까지 수행한다.
 - **env 유실 방지**: 현재 Lambda 환경변수 전체를 읽어 `TRACKER_API_KEY`만 교체한다. 아래 § 2의 수동 절차처럼
   `RESULT_API_URL`을 손으로 다시 넣을 필요가 없고, `RESULT_QUEUE_URL` 등 다른 값도 보존된다.
-- **검증 게이트**: dev 검증이 통과해야 prod에 반영한다. 검증이 불명확(UNKNOWN)하면 로그를 출력하고 멈추며,
-  직접 확인 후 확신하면 `--force-prod`로 재실행한다. dev만 확인하려면 `--dev-only`.
+- **키 판정 게이트**: 어느 env를 건드리기 전에 `https://apis.tracker.delivery/graphql`로 직접 1회 호출해
+  GraphQL 에러 코드로 가른다. `UNAUTHENTICATED`면 키가 죽은 것이라 **dev에조차 쓰지 않고** 멈춘다.
+  인증이 통과하면 테스트 운송장이 가짜라 `BAD_REQUEST`가 나는데, 이것이 정상 신호다.
+- **배선 검증 게이트**: dev 검증이 통과해야 prod에 반영한다. 여기서 보는 것은 키가 아니라 **갱신한 env가
+  실제로 반영됐는가**다. 검증이 불명확(UNKNOWN)하면 로그를 출력하고 멈추며, 직접 확인 후 확신하면
+  `--force-prod`로 재실행한다. dev만 확인하려면 `--dev-only`.
+
+> 판정을 CloudWatch 로그 문자열로 하지 않는 이유: 만료 응답은 `Invalid or expired token.`(code
+> `UNAUTHENTICATED`)으로 오는데, 이 문구는 `unauthorized`·`401`·`invalid key`·`authentication` 어느
+> 패턴에도 걸리지 않는다. 반면 PASS 신호로 쓰이던 `Dispatching to`는 외부 호출 **직전**에 우리 핸들러가
+> 찍는 줄이라 키가 죽어도 항상 뜬다. 그래서 옛 게이트는 만료된 키를 PASS로 통과시켜 prod에 반영했다
+> (2026-08-31 발견). 지금은 응답을 받은 뒤에만 나오는 신호로만 판정한다.
 - **발급일 자동 기록**: prod 반영 후 `api-key-issued-at`에 오늘 날짜를 쓴다. 이 파일이 만료 환기의 SoT다(§ 4).
 
 수동으로 하려면 아래 절차를 그대로 따라도 된다(스크립트는 이 절차의 자동화다).
